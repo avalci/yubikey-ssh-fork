@@ -6,8 +6,9 @@ After this guide, you will have **one primary key** for everyday SSH use, and **
 This is a step-by-step guide for how to succeed.
 
 ## Prerequisites
-- MacOS with Homebrew
+- MacOS with YubiKey Manager
 - 2 x Yubikeys (we use 5C, but any CCID-enabled Ubikey should work)
+- [OpenSC](https://github.com/OpenSC/OpenSC/releases)
 
 ## Configure the Ubikeys
 These steps should preferably be done on a fresh computer that we easily can disconnect from internet, and earse the whole computer afterwards. We used a Raspberry Pi. It might sound paranoid, but let's just be 100% sure that your private key can't be compromised in any way. If you follow this recommendation or not is totally up to you.
@@ -15,7 +16,7 @@ These steps should preferably be done on a fresh computer that we easily can dis
 ### 1. Install YubiKey Manager
 Either:
 
-#### a. If you're on MacOS:
+#### a. If you're on MacOS with Brew:
 ```
 brew install ykman
 ```
@@ -34,25 +35,25 @@ Connect your Ubikey, and either:
 
 #### a. Generate a key (ensure to save the output key)
 ```
-ykman piv change-management-key --touch --generate
+/Applications/YubiKey\ Manager.app/Contents/MacOS/ykman piv access change-management-key --touch --generate
 ```
 
 #### b. Set a key manually
 ```
-ykman piv change-management-key --touch
+/Applications/YubiKey\ Manager.app/Contents/MacOS/ykman piv access change-management-key --touch
 ```
 
 ### 4. Change number of allowed PIN/PUK retries (optional)
 The default is 3 retries each, then you're screwed. You might want to increase these:
 ```
-ykman piv set-pin-retries 10 10
+/Applications/YubiKey\ Manager.app/Contents/MacOS/ykman piv set-pin-retries 10 10
 ```
 
 ### 5. Change PIN/PUK codes
 The default PIN/PUK codes are `123456` and `12345678` respectively - we do obviously want to change these:
 ```
-ykman piv change-pin
-ykman piv change-puk
+/Applications/YubiKey\ Manager.app/Contents/MacOS/ykman piv change-pin
+/Applications/YubiKey\ Manager.app/Contents/MacOS/ykman piv change-puk
 ```
 
 ### 6. Generate RSA key pair
@@ -66,14 +67,14 @@ openssl rsa -in key.pem -outform PEM -pubout -out public.pem
 ### 7. Import RSA private key to Ubikey (repeat per Ubikey)
 Requiring key touch will improve security, but we don't want to do this all the time. Setting `touch-policy` to `cached` will "only" require a touch every 15 seconds. You can also choose `never` if you're bothered with this.
 ```
-ykman piv import-key --touch-policy cached 9a private.pem
-ykman piv generate-certificate -s ssh 9a public.pem
+/Applications/YubiKey\ Manager.app/Contents/MacOS/ykman piv keys import --touch-policy cached 9a private.pem
+/Applications/YubiKey\ Manager.app/Contents/MacOS/ykman piv certificates generate -s ssh 9a public.pem
 ```
 
 ### 8. Save the key files to a USB stick
 As the private keys on Yubikeys are read-only, you should really want to save the generated files to an encrypted USB stick. If you don't want to bother with encrypted partitions, the easiest encryption is a ZIP file. It's better than nothing:
 ```
-zip -e piv.zip .
+zip -e piv.zip *
 ```
 
 ### 9. Clear your computer & lock away your devices
@@ -98,6 +99,9 @@ Add it to the servers you want to SSH into with your Ubikey.
 
 ### 3. Configure SSH
 Edit your `~/.ssh/config` file with either:
+```
+code ~/.ssh/config
+```
 
 #### a. Use Ubikey for all hosts
 ```
