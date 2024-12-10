@@ -121,6 +121,7 @@ code ~/.ssh/config
 Host *
   PKCS11Provider /usr/local/lib/opensc-pkcs11.so
   IdentitiesOnly yes
+  UseKeychain yes
 ```
 
 #### b. Use Ubikey for specific host
