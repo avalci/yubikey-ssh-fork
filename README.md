@@ -16,6 +16,19 @@ These steps should preferably be done on a fresh computer that we easily can dis
 ### 1. Install YubiKey Manager
 Either:
 
+```
+sudo touch /usr/local/bin/ykman
+code /usr/local/bin/ykman
+```
+
+```
+#!/usr/bin/env bash
+
+/XApplications/YubiKey\ Manager.app/Contents/MacOS/ykman "$*"
+```
+
+or 
+
 #### a. If you're on MacOS with Brew:
 ```
 brew install ykman
@@ -35,25 +48,25 @@ Connect your Ubikey, and either:
 
 #### a. Generate a key (ensure to save the output key)
 ```
-/Applications/YubiKey\ Manager.app/Contents/MacOS/ykman piv access change-management-key --touch --generate
+ykman piv access change-management-key --touch --generate
 ```
 
 #### b. Set a key manually
 ```
-/Applications/YubiKey\ Manager.app/Contents/MacOS/ykman piv access change-management-key --touch
+ykman piv access change-management-key --touch
 ```
 
 ### 4. Change number of allowed PIN/PUK retries (optional)
 The default is 3 retries each, then you're screwed. You might want to increase these:
 ```
-/Applications/YubiKey\ Manager.app/Contents/MacOS/ykman piv set-pin-retries 10 10
+ykman piv set-pin-retries 10 10
 ```
 
 ### 5. Change PIN/PUK codes
 The default PIN/PUK codes are `123456` and `12345678` respectively - we do obviously want to change these:
 ```
-/Applications/YubiKey\ Manager.app/Contents/MacOS/ykman piv change-pin
-/Applications/YubiKey\ Manager.app/Contents/MacOS/ykman piv change-puk
+ykman piv change-pin
+ykman piv change-puk
 ```
 
 ### 6. Generate RSA key pair
@@ -67,8 +80,8 @@ openssl rsa -in key.pem -outform PEM -pubout -out public.pem
 ### 7. Import RSA private key to Ubikey (repeat per Ubikey)
 Requiring key touch will improve security, but we don't want to do this all the time. Setting `touch-policy` to `cached` will "only" require a touch every 15 seconds. You can also choose `never` if you're bothered with this.
 ```
-/Applications/YubiKey\ Manager.app/Contents/MacOS/ykman piv keys import --touch-policy cached 9a private.pem
-/Applications/YubiKey\ Manager.app/Contents/MacOS/ykman piv certificates generate -s ssh 9a public.pem
+ykman piv keys import --touch-policy cached 9a private.pem
+ykman piv certificates generate -s ssh 9a public.pem
 ```
 
 ### 8. Save the key files to a USB stick
@@ -86,7 +99,7 @@ Now we're back online with our MacOS. Let's configure the ssh-agent to listen fo
 ### 1. Install OpenSC
 ```
 brew cask install opensc
-ssh-add -s /usr/local/lib/opensc-pkcs11.so
+ssh-add --apple-use-keychain -s /usr/local/lib/opensc-pkcs11.so
 ```
 
 ### 2. Export RSA public key
@@ -115,6 +128,7 @@ Host *
 Host example.com
   PKCS11Provider /usr/local/lib/opensc-pkcs11.so
   IdentitiesOnly yes
+  UseKeychain yes
 ```
 
 ## Usage
@@ -125,3 +139,10 @@ ssh username@host.com
 
 ### If you required touch
 You will notice that when you connect to the server, it will freeze. This is because the key is waiting for your touch. Touch it, and you're in.
+
+### Fix SSH Agent 
+```
+pkill ssh
+eval `ssh-agent -s`
+ssh-add --apple-use-keychain -s /usr/local/lib/opensc-pkcs11.so
+```
