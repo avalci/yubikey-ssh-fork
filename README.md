@@ -147,3 +147,9 @@ pkill ssh
 eval `ssh-agent -s`
 ssh-add --apple-use-keychain -s /usr/local/lib/opensc-pkcs11.so
 ```
+
+or
+
+```
+pkill ssh && eval `ssh-agent -s` && ssh-add --apple-use-keychain -s /usr/local/lib/opensc-pkcs11.so
+```
